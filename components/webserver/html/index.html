@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energy Device Edge</title>
+    <style>
+        :root {
+            --bg: #eef3f7;
+            --surface: #ffffff;
+            --card: #ffffff;
+            --card-strong: #f6f9fb;
+            --header-surface: #203446;
+            --header-tint: #162634;
+            --header-ink: #f8fafc;
+            --header-muted: #bfd0de;
+            --header-line: rgba(191, 208, 222, 0.18);
+            --line: #d9e2e9;
+            --line-strong: #b9c6d0;
+            --ink: #0f1720;
+            --muted: #5b6675;
+            --blue: #60a5fa;
+            --blue-soft: rgba(96, 165, 250, 0.14);
+            --blue-deep: #2563eb;
+            --green: #1f7a52;
+            --red: #c44b4b;
+            --amber: #b7791f;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            min-height: 100vh;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            color: var(--ink);
+            background: linear-gradient(180deg, #f7fafc 0%, var(--bg) 180px, var(--bg) 100%);
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: transparent;
+            overflow: hidden;
+            border-radius: 0;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 26px 20px 18px;
+            background: linear-gradient(180deg, #1a2d3d 0%, #1f3344 42%, #243b4f 100%);
+        }
+
+        .brand-mark {
+            width: 46px;
+            height: 46px;
+            flex: 0 0 auto;
+        }
+
+        .header-copy {
+            min-width: 0;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            line-height: 1;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--header-ink);
+        }
+
+        .header p {
+            margin-top: 6px;
+            color: var(--header-muted);
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 0 20px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--header-surface);
+            padding-top: 2px;
+            padding-bottom: 14px;
+        }
+
+        .tab {
+            padding: 10px 16px;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--header-muted);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .tab:hover {
+            color: var(--header-ink);
+            background: rgba(255, 255, 255, 0.11);
+        }
+
+        .tab.active {
+            color: var(--header-ink);
+            background: rgba(96, 165, 250, 0.2);
+            border-color: rgba(191, 208, 222, 0.14);
+        }
+
+        .content {
+            padding: 20px;
+            background: var(--surface);
+            border-radius: 0;
+        }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; animation: fade-up 0.28s ease; }
+
+        .panel,
+        .monitor-shell,
+        .summary-card,
+        .phase-card,
+        .info-box,
+        .modal-content {
+            background: var(--card);
+            border: 1px solid rgba(15, 23, 32, 0.06);
+            border-radius: 18px;
+            box-shadow: none;
+        }
+
+        .panel {
+            padding: 20px;
+        }
+
+        .config-section {
+            padding: 18px;
+            margin-bottom: 16px;
+            background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+            border: 1px solid rgba(15, 23, 32, 0.07);
+            border-radius: 18px;
+        }
+
+        .config-section.destination-section {
+            background: linear-gradient(180deg, #f8fbff 0%, #f3f8ff 100%);
+            border-color: rgba(96, 165, 250, 0.18);
+        }
+
+        .config-section .section-kicker {
+            margin-bottom: 10px;
+            color: #47607a;
+        }
+
+        .config-section .group:last-child {
+            margin-bottom: 0;
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .panel-subtitle {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 14px;
+        }
+
+        .section-divider {
+            margin: 22px 0 16px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(15, 23, 32, 0.08);
+        }
+
+        .section-kicker {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .destination-local-only {
+            display: none;
+        }
+
+        .destination-local-only.visible {
+            display: block;
+        }
+
+        .stack { display: grid; gap: 18px; }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .group { margin-bottom: 18px; }
+
+        .group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            color: #314047;
+        }
+
+        .group input,
+        .group select {
+            width: 100%;
+            padding: 12px 0;
+            border: none;
+            border-bottom: 1px solid var(--line-strong);
+            font-size: 14px;
+            color: var(--ink);
+            background: transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .group input:focus,
+        .group select:focus {
+            outline: none;
+            border-color: var(--blue-deep);
+        }
+
+        .group .hint {
+            margin-top: 7px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group input { flex: 1; }
+
+        button {
+            border: none;
+            cursor: pointer;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        button:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        button:active { transform: none; }
+
+        .btn-block { width: 100%; }
+        .btn-primary { color: #fff; background: var(--blue-deep); }
+        .btn-success { color: #fff; background: var(--green); }
+        .btn-warning { color: #fff; background: var(--amber); }
+        .btn-secondary { color: #fff; background: #334155; }
+        .btn-danger { color: #fff; background: var(--red); }
+        .btn-inline { white-space: nowrap; }
+
+        .monitor-shell {
+            padding: 0;
+            border: none;
+            background: transparent;
+        }
+
+        .monitor-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: end;
+            margin-bottom: 14px;
+        }
+
+        .monitor-title h2 {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+
+        .monitor-title p,
+        .summary-note {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .summary-card {
+            padding: 16px;
+            background: var(--card-strong);
+            border: none;
+            border-radius: 16px;
+            box-shadow: inset 0 0 0 1px rgba(15, 23, 32, 0.03);
+        }
+
+        .summary-label {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 10px;
+        }
+
+        .summary-value {
+            font-size: clamp(20px, 3vw, 30px);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            color: var(--ink);
+        }
+
+        .phase-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .phase-card {
+            padding: 18px;
+            background: #fff;
+            border: 1px solid rgba(15, 23, 32, 0.06);
+            border-radius: 18px;
+            box-shadow: 0 6px 16px rgba(15, 23, 32, 0.03);
+        }
+
+        .phase-card.tone-a { box-shadow: inset 3px 0 0 #60a5fa; }
+        .phase-card.tone-b { box-shadow: inset 3px 0 0 #94a3b8; }
+        .phase-card.tone-c { box-shadow: inset 3px 0 0 #0f172a; }
+
+        .phase-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: start;
+            margin-bottom: 18px;
+        }
+
+        .phase-name {
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .phase-head h3 {
+            font-size: 24px;
+            letter-spacing: -0.03em;
+        }
+
+        .phase-pill {
+            padding: 0;
+            background: transparent;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .hero-value {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .hero-value strong {
+            font-size: clamp(30px, 4vw, 42px);
+            line-height: 1;
+            letter-spacing: -0.05em;
+        }
+
+        .hero-value span {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .metric {
+            padding: 12px;
+            background: var(--card-strong);
+            border-radius: 12px;
+            box-shadow: inset 0 0 0 1px rgba(15, 23, 32, 0.03);
+        }
+
+        .metric span {
+            display: block;
+            color: var(--muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
+        }
+
+        .metric strong {
+            font-size: 15px;
+            letter-spacing: -0.02em;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 46px 20px;
+            color: var(--muted);
+            border: 1px solid rgba(15, 23, 32, 0.06);
+            border-radius: 18px;
+            background: #fff;
+        }
+
+        .no-data svg {
+            width: 56px;
+            height: 56px;
+            margin-bottom: 14px;
+            opacity: 0.5;
+        }
+
+        .info-box {
+            padding: 16px;
+            margin-bottom: 14px;
+            border-left: none;
+            background: var(--card-strong);
+            box-shadow: inset 0 0 0 1px rgba(15, 23, 32, 0.03);
+        }
+
+        .info-box .label {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+
+        .info-box .value {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .hint-card {
+            padding: 16px;
+            background: #f8fbff;
+            border: 1px solid rgba(15, 23, 32, 0.06);
+            border-radius: 16px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; }
+        .file-input-wrapper input[type=file] { position: absolute; left: -9999px; }
+
+        .file-input-label {
+            display: block;
+            padding: 18px 16px;
+            border: 1px dashed var(--line-strong);
+            border-radius: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.24s ease;
+            background: #fff;
+        }
+
+        .file-input-label:hover {
+            border-color: var(--blue-deep);
+            background: #f8fbff;
+        }
+
+        .file-name {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(26, 24, 20, 0.38);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            margin: 6vh auto 0;
+            width: min(460px, 100%);
+            overflow: hidden;
+        }
+
+        .modal-header,
+        .modal-body,
+        .modal-footer { padding: 20px; }
+
+        .modal-header {
+            border-bottom: 1px solid var(--line);
+            background: linear-gradient(135deg, rgba(28, 124, 124, 0.06) 0%, rgba(200, 134, 44, 0.10) 100%);
+        }
+
+        .modal-header h3 {
+            font-size: 18px;
+            letter-spacing: -0.02em;
+        }
+
+        #noticeModal .modal-content[data-tone="info"] .modal-header { background: #f3f8ff; }
+        #noticeModal .modal-content[data-tone="success"] .modal-header { background: #f2faf4; }
+        #noticeModal .modal-content[data-tone="warning"] .modal-header { background: #fff7ea; }
+        #noticeModal .modal-content[data-tone="error"] .modal-header { background: #fff3f3; }
+
+        .notice-copy {
+            color: var(--ink);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .modal-body {
+            max-height: 58vh;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--line);
+            text-align: right;
+        }
+
+        .ap-item {
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(87, 72, 54, 0.08);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ap-item:hover .ssid { color: var(--blue-deep); }
+
+        .ap-item .ssid {
+            font-weight: 800;
+            color: var(--ink);
+            transition: color 0.2s ease;
+        }
+
+        .ap-item .rssi {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        @keyframes fade-up {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 900px) {
+            body { padding: 12px; }
+            .container { min-height: calc(100vh - 24px); }
+            .two-col,
+            .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 680px) {
+            .header,
+            .content { padding-left: 16px; padding-right: 16px; }
+            .header {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .tabs {
+                padding: 0 16px 16px;
+                gap: 10px;
+            }
+            .monitor-top,
+            .input-group,
+            .two-col { grid-template-columns: 1fr; display: grid; }
+            .summary-grid,
+            .metric-grid { grid-template-columns: 1fr; }
+            .tab {
+                flex: 1 1 calc(50% - 10px);
+                text-align: center;
+            }
+            .brand-mark {
+                width: 42px;
+                height: 42px;
+            }
+            .config-section {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <svg class="brand-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" fill="none" aria-hidden="true">
+                <g transform="translate(4,4) scale(1.2)">
+                    <path d="M20 3L33 10.5V25.5L20 33L7 25.5V10.5L20 3Z" stroke="#60A5FA" stroke-width="2.2" stroke-linejoin="round"/>
+                    <path d="M14 14V22M26 14V22" stroke="#F8FAFC" stroke-width="2.2" stroke-linecap="round"/>
+                    <path d="M14 18H26" stroke="#F8FAFC" stroke-width="2.2" stroke-linecap="round"/>
+                    <path d="M20 22V26" stroke="#60A5FA" stroke-width="2.2" stroke-linecap="round"/>
+                </g>
+            </svg>
+            <div class="header-copy">
+                <h1>Energy Device Edge</h1>
+                <p>Collect local energy data and forward it to the platform you choose.</p>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('monitor')">Monitor</button>
+            <button class="tab" onclick="switchTab('config')">Settings</button>
+            <button class="tab" onclick="switchTab('network')">Network</button>
+            <button class="tab" onclick="switchTab('advanced')">Advanced</button>
+        </div>
+
+        <div class="content">
+            <div id="monitor" class="tab-pane active">
+                <div id="meterData" class="monitor-shell">
+                    <div class="no-data">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M13,2.05V5.08C16.39,5.57 19,8.47 19,12C19,12.9 18.82,13.75 18.5,14.54L21.12,16.07C21.68,14.83 22,13.45 22,12C22,6.82 18.05,2.55 13,2.05M12,19C8.13,19 5,15.87 5,12C5,8.47 7.61,5.57 11,5.08V2.05C5.94,2.55 2,6.81 2,12C2,17.52 6.47,22 12,22C14.3,22 16.4,21.18 18.06,19.85L15.44,18.32C14.39,18.75 13.23,19 12,19M18,8H13V13H16.35L18,8Z"/>
+                        </svg>
+                        <div>No live meter data yet.</div>
+                        <div style="font-size: 13px; margin-top: 8px;">Set the source device host and protocol port in Settings.</div>
+                    </div>
+                </div>
+                <button class="btn-block btn-primary" onclick="refreshMeterData()" style="margin-top: 15px;">Refresh Data</button>
+            </div>
+
+            <div id="config" class="tab-pane">
+                <div class="panel">
+                    <div class="panel-title">Device Setup</div>
+                    <form id="cfgForm" onsubmit="return saveConfig(event)">
+                        <div class="group">
+                            <label>Device Name</label>
+                            <input type="text" id="devName" name="device_name" placeholder="energy_device_edge" required>
+                        </div>
+
+                        <div class="config-section">
+                            <span class="section-kicker">Data Source</span>
+                            <div class="group">
+                                <label>Meter Type</label>
+                                <select id="meterType" name="meter_type" onchange="updateMeterTypeHelp(true)">
+                                    <option value="">-- Not Configured --</option>
+                                    <option value="IAMMETER_WEM3080T">IAMMETER WEM3080T</option>
+                                    <option value="SHELLY_3EM">Shelly Pro 3EM</option>
+                                </select>
+                                <div class="hint" id="meterTypeHint">Choose the local source device protocol.</div>
+                            </div>
+
+                            <div class="group">
+                                <label>Meter Host</label>
+                                <input type="text" id="meterHost" name="meter_host" placeholder="192.168.1.100">
+                                <div class="hint" id="meterHostHint">Use the IP or host name only. Keep the protocol port in the separate port field.</div>
+                            </div>
+
+                            <div class="group">
+                                <label>Meter Port</label>
+                                <input type="number" id="meterPort" name="meter_port" value="502" placeholder="502" min="1" max="65535">
+                                <div class="hint" id="meterPortHint">IAMMETER uses Modbus TCP on 502. Shelly Pro 3EM uses Shelly RPC HTTP on 80, while the simulator often uses 18080.</div>
+                            </div>
+                        </div>
+
+                        <div class="config-section destination-section">
+                            <span class="section-kicker">Data Destination</span>
+                            <div class="group">
+                                <label>Upload Destination</label>
+                                <select id="destinationType" name="destination_type" onchange="toggleDestinationFields()">
+                                    <option value="NONE">Disabled</option>
+                                    <option value="IAMMETER_CLOUD">IAMMETER Cloud</option>
+                                    <option value="IAMMETER_LOCAL">IAMMETER Local</option>
+                                </select>
+                                <div class="hint">Cloud uses the official IAMMETER endpoint. Local keeps the same upload format, but requires your own address.</div>
+                            </div>
+
+                            <div class="group destination-local-only" id="destinationAddressGroup">
+                                <label>Destination Address</label>
+                                <input type="text" id="destinationAddress" name="destination_address" placeholder="https://your-iammeter-local-host">
+                                <div class="hint">Only used for IAMMETER Local.</div>
+                            </div>
+
+                            <div class="group">
+                                <label>Upload SN</label>
+                                <input type="text" id="cloudSn" name="cloud_sn" placeholder="Optional">
+                                <div class="hint">Leave empty to use the device MAC address.</div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-block btn-success">Save Source Settings</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="network" class="tab-pane">
+                <div class="two-col">
+                    <div class="panel">
+                        <div class="panel-title">Wi-Fi Connection</div>
+                        <form id="wifiForm" onsubmit="return saveWiFi(event)">
+                            <div class="group">
+                                <label>Wi-Fi SSID</label>
+                                <div class="input-group">
+                                    <input type="text" id="ssid" name="ssid" placeholder="Enter Wi-Fi name" autocomplete="off">
+                                    <button type="button" class="btn-primary btn-inline" onclick="openScanModal()">Scan</button>
+                                </div>
+                            </div>
+
+                            <div class="group">
+                                <label>Wi-Fi Password</label>
+                                <input type="password" id="pwd" name="password" placeholder="Enter password">
+                                <div class="hint">Leave empty if the password should stay unchanged.</div>
+                            </div>
+
+                            <button type="submit" class="btn-block btn-success">Save and Reconnect</button>
+                        </form>
+                    </div>
+
+                    <div class="stack">
+                        <div class="info-box">
+                            <div class="label">Current Connection</div>
+                            <div class="value" id="currentSSID">Loading...</div>
+                        </div>
+                        <div class="hint-card">
+                            If startup Wi-Fi fails, the device opens a recovery hotspot named <strong>energy_device_edge_xxxx</strong>, where <strong>xxxx</strong> is the last 4 hex digits of the MAC address.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="advanced" class="tab-pane">
+                <div class="stack">
+                    <div class="panel">
+                        <div class="panel-title">Firmware</div>
+                        <div class="info-box" style="margin-top: 14px;">
+                            <div class="label">Version</div>
+                            <div class="value" id="firmwareVersion">Loading...</div>
+                        </div>
+                        <div class="hint-card" id="firmwareMeta" style="margin-top: 14px;">Loading firmware details...</div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-title">Firmware Update</div>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="fwFile" accept=".bin" onchange="updateFileName()">
+                            <label for="fwFile" class="file-input-label">Choose firmware file (.bin)</label>
+                        </div>
+                        <div class="file-name" id="fileName">No file selected</div>
+                        <button class="btn-block btn-warning" onclick="uploadOta()" style="margin-top: 10px;">Upload and Update</button>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-title">System Control</div>
+                        <button class="btn-block btn-secondary" onclick="restartDevice()">Restart Device</button>
+                        <button class="btn-block btn-danger" onclick="factoryReset()" style="margin-top: 10px;">Factory Reset</button>
+                        <div class="hint-card" style="margin-top: 14px;">Factory reset clears saved Wi-Fi, source, destination, and device settings, then reboots into the default recovery flow.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Select Wi-Fi Network</h3>
+            </div>
+            <div class="modal-body">
+                <div id="ap-list">Scanning...</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="noticeModal" class="modal">
+        <div class="modal-content" data-tone="info">
+            <div class="modal-header">
+                <h3 id="noticeTitle">Status</h3>
+            </div>
+            <div class="modal-body">
+                <div id="noticeMessage" class="notice-copy"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeNoticeModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlbase = '/';//'http://192.168.1.163/';
+        const scanModal = document.getElementById('modal');
+        const noticeModal = document.getElementById('noticeModal');
+        const noticeCard = noticeModal.querySelector('.modal-content');
+        const noticeTitle = document.getElementById('noticeTitle');
+        const noticeMessage = document.getElementById('noticeMessage');
+        const apListEl = document.getElementById('ap-list');
+        let meterRefreshTimer = null;
+        let appState = {
+            ap_mode: false,
+            hide_monitor_ui: false,
+        };
+
+        const meterProfiles = {
+            IAMMETER_WEM3080T: {
+                defaultPort: 502,
+                typeHint: 'Three-phase Modbus TCP source compatible with the WEM3080T register map.',
+                hostHint: 'Use the IAMMETER IP or host name only. This source reads Modbus TCP registers.',
+                portHint: 'IAMMETER WEM3080T uses Modbus TCP on port 502.'
+            },
+            SHELLY_3EM: {
+                defaultPort: 80,
+                typeHint: 'Three-phase Shelly Pro 3EM source using /rpc/EM.GetStatus?id=0 and /rpc/EMData.GetStatus?id=0.',
+                hostHint: 'Use the Shelly IP or host name only. This source reads the local Shelly RPC HTTP API.',
+                portHint: 'Shelly Pro 3EM uses HTTP on port 80. The simulator commonly exposes the same RPC API on port 18080.'
+            }
+        };
+
+        function apiUrl(path) {
+            const base = urlbase || '/';
+            const normalizedBase = base.replace(/\/?$/, '/');
+            const normalizedPath = path.replace(/^\//, '');
+            return normalizedBase + normalizedPath;
+        }
+
+        async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+            try {
+                return await fetch(url, {
+                    ...options,
+                    signal: controller.signal
+                });
+            } catch (err) {
+                if (err && err.name === 'AbortError') {
+                    throw new Error('Request timed out.');
+                }
+                throw err;
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        function closeNoticeModal() {
+            noticeModal.style.display = 'none';
+        }
+
+        function applyRuntimeLayout() {
+            const hideMonitor = !!appState.hide_monitor_ui;
+            const monitorTab = document.querySelector('.tab[onclick="switchTab(\'monitor\')"]');
+            const configTab = document.querySelector('.tab[onclick="switchTab(\'config\')"]');
+            const monitorPane = document.getElementById('monitor');
+            const configPane = document.getElementById('config');
+
+            if (monitorTab) monitorTab.style.display = hideMonitor ? 'none' : '';
+            if (configTab) configTab.style.display = hideMonitor ? 'none' : '';
+            if (monitorPane) monitorPane.style.display = hideMonitor ? 'none' : '';
+            if (configPane) configPane.style.display = hideMonitor ? 'none' : '';
+
+            if (hideMonitor) {
+                stopAutoRefresh();
+                switchTab('network');
+                showStatus('SoftAP mode active. Only network and system settings are available.', 'info');
+            }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+            document.querySelectorAll('.tab').forEach(tab => {
+                if (tab.onclick && tab.onclick.toString().includes("'" + tabName + "'")) {
+                    tab.classList.add('active');
+                }
+            });
+
+            if (appState.hide_monitor_ui && (tabName === 'monitor' || tabName === 'config')) {
+                tabName = 'network';
+            }
+
+            document.getElementById(tabName).classList.add('active');
+
+            if (tabName === 'monitor') {
+                refreshMeterData();
+                startAutoRefresh();
+            } else {
+                stopAutoRefresh();
+            }
+        }
+
+        function startAutoRefresh() {
+            stopAutoRefresh();
+            meterRefreshTimer = setInterval(refreshMeterData, 5000);
+        }
+
+        function stopAutoRefresh() {
+            if (meterRefreshTimer) {
+                clearInterval(meterRefreshTimer);
+                meterRefreshTimer = null;
+            }
+        }
+
+        function toggleDestinationFields() {
+            const destinationType = document.getElementById('destinationType').value;
+            const addressGroup = document.getElementById('destinationAddressGroup');
+            const addressInput = document.getElementById('destinationAddress');
+            const isLocal = destinationType === 'IAMMETER_LOCAL';
+
+            addressGroup.classList.toggle('visible', isLocal);
+            addressInput.required = isLocal;
+
+            if (!isLocal && destinationType === 'IAMMETER_CLOUD') {
+                addressInput.value = '';
+            }
+            if (!isLocal && destinationType === 'NONE') {
+                addressInput.value = '';
+            }
+        }
+
+        function updateMeterTypeHelp(forcePort = false) {
+            const meterTypeEl = document.getElementById('meterType');
+            const meterPortEl = document.getElementById('meterPort');
+            const typeHintEl = document.getElementById('meterTypeHint');
+            const hostHintEl = document.getElementById('meterHostHint');
+            const portHintEl = document.getElementById('meterPortHint');
+
+            const previousType = meterTypeEl.dataset.previousType || '';
+            const previousProfile = meterProfiles[previousType];
+            const nextProfile = meterProfiles[meterTypeEl.value];
+
+            if (!nextProfile) {
+                typeHintEl.textContent = 'Choose the local source device protocol.';
+                hostHintEl.textContent = 'Use the IP or host name only. Keep the protocol port in the separate port field.';
+                portHintEl.textContent = 'Choose a valid device port for the selected source.';
+                meterTypeEl.dataset.previousType = meterTypeEl.value;
+                return;
+            }
+
+            const currentPort = Number(meterPortEl.value || 0);
+            const shouldReplacePort = forcePort || !currentPort || (previousProfile && currentPort === previousProfile.defaultPort);
+            if (shouldReplacePort) {
+                meterPortEl.value = nextProfile.defaultPort;
+            }
+
+            typeHintEl.textContent = nextProfile.typeHint;
+            hostHintEl.textContent = nextProfile.hostHint;
+            portHintEl.textContent = nextProfile.portHint;
+            meterTypeEl.dataset.previousType = meterTypeEl.value;
+        }
+
+        function formatPower(value) {
+            const absValue = Math.abs(value);
+            if (absValue >= 1000) {
+                return (value / 1000).toFixed(2) + ' kW';
+            }
+            return Number(value).toFixed(0) + ' W';
+        }
+
+        function formatEnergy(value) {
+            return Number(value).toFixed(3) + ' kWh';
+        }
+
+        function formatNumber(value, decimals) {
+            return Number(value).toFixed(decimals);
+        }
+
+        function formatFrequency(value) {
+            return value > 0 ? `${formatNumber(value, 2)} Hz` : 'Not reported';
+        }
+
+        async function refreshMeterData() {
+            if (appState.hide_monitor_ui) {
+                return;
+            }
+
+            try {
+                const res = await fetch(apiUrl('/api/meter/data'));
+                if (!res.ok) throw new Error('Failed to fetch meter data');
+                const data = await res.json();
+
+                if (data.error) {
+                    showNoDataMessage(data.error);
+                } else {
+                    displayMeterData(data);
+                }
+            } catch (e) {
+                showNoDataMessage('Unable to connect to meter');
+            }
+        }
+
+        function showNoDataMessage(message) {
+            const detail = message === 'Meter not configured'
+                ? 'Open Settings and enter the source device host plus the configured protocol port.'
+                : 'The meter is configured, but reading data failed. Check that the device is reachable and the protocol port is correct.';
+
+            document.getElementById('meterData').innerHTML = `
+                <div class="monitor-shell">
+                    <div class="no-data">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M13,2.05V5.08C16.39,5.57 19,8.47 19,12C19,12.9 18.82,13.75 18.5,14.54L21.12,16.07C21.68,14.83 22,13.45 22,12C22,6.82 18.05,2.55 13,2.05M12,19C8.13,19 5,15.87 5,12C5,8.47 7.61,5.57 11,5.08V2.05C5.94,2.55 2,6.81 2,12C2,17.52 6.47,22 12,22C14.3,22 16.4,21.18 18.06,19.85L15.44,18.32C14.39,18.75 13.23,19 12,19M18,8H13V13H16.35L18,8Z"/>
+                        </svg>
+                        <div>${message}</div>
+                        <div style="font-size: 13px; margin-top: 8px;">${detail}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayMeterData(data) {
+            if (!data.Datas || data.Datas.length !== 3) {
+                showNoDataMessage('Invalid data format');
+                return;
+            }
+
+            const phaseMeta = [
+                { label: 'L1 / Phase A', tone: 'tone-a' },
+                { label: 'L2 / Phase B', tone: 'tone-b' },
+                { label: 'L3 / Phase C', tone: 'tone-c' }
+            ];
+
+            const phases = data.Datas.map((phaseData, index) => ({
+                index,
+                voltage: Number(phaseData[0] || 0),
+                current: Number(phaseData[1] || 0),
+                power: Number(phaseData[2] || 0),
+                forwardEnergy: Number(phaseData[3] || 0),
+                reverseEnergy: Number(phaseData[4] || 0),
+                frequency: Number(phaseData[5] || 0),
+                powerFactor: Number(phaseData[6] || 0)
+            }));
+
+            const totalPower = phases.reduce((sum, phase) => sum + phase.power, 0);
+            const totalForwardEnergy = phases.reduce((sum, phase) => sum + phase.forwardEnergy, 0);
+            const totalReverseEnergy = phases.reduce((sum, phase) => sum + phase.reverseEnergy, 0);
+            const averageVoltage = phases.reduce((sum, phase) => sum + phase.voltage, 0) / phases.length;
+            const lineFrequency = phases.find(phase => phase.frequency > 0)?.frequency || 0;
+            const refreshedAt = new Date().toLocaleTimeString();
+
+            const summaryHtml = `
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-label">Total Power</div>
+                        <div class="summary-value">${formatPower(totalPower)}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Grid Frequency</div>
+                        <div class="summary-value">${formatFrequency(lineFrequency)}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Forward Energy</div>
+                        <div class="summary-value">${formatEnergy(totalForwardEnergy)}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Average Voltage</div>
+                        <div class="summary-value">${formatNumber(averageVoltage, 1)} V</div>
+                    </div>
+                </div>
+            `;
+
+            const cardsHtml = phases.map(phase => {
+                const meta = phaseMeta[phase.index];
+                return `
+                    <div class="phase-card ${meta.tone}">
+                        <div class="phase-head">
+                            <div>
+                                <div class="phase-name">${meta.label}</div>
+                                <h3>${formatNumber(phase.voltage, 1)} V</h3>
+                            </div>
+                            <div class="phase-pill">PF ${formatNumber(phase.powerFactor, 2)}</div>
+                        </div>
+                        <div class="hero-value">
+                            <strong>${formatPower(phase.power)}</strong>
+                            <span>active power</span>
+                        </div>
+                        <div class="metric-grid">
+                            <div class="metric">
+                                <span>Current</span>
+                                <strong>${formatNumber(phase.current, 2)} A</strong>
+                            </div>
+                            <div class="metric">
+                                <span>Frequency</span>
+                                <strong>${formatFrequency(phase.frequency)}</strong>
+                            </div>
+                            <div class="metric">
+                                <span>Forward</span>
+                                <strong>${formatEnergy(phase.forwardEnergy)}</strong>
+                            </div>
+                            <div class="metric">
+                                <span>Reverse</span>
+                                <strong>${formatEnergy(phase.reverseEnergy)}</strong>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('meterData').innerHTML = `
+                <div class="monitor-shell">
+                    <div class="monitor-top">
+                        <div class="monitor-title">
+                            <h2>Three-Phase Snapshot</h2>
+                        </div>
+                        <div class="summary-note">Updated ${refreshedAt}</div>
+                    </div>
+                    ${summaryHtml}
+                    <div class="phase-grid">${cardsHtml}</div>
+                    <div class="summary-note" style="margin-top: 14px;">Reverse energy total: ${formatEnergy(totalReverseEnergy)}</div>
+                </div>
+            `;
+        }
+
+        function closeModal() { scanModal.style.display = 'none'; }
+
+        async function openScanModal() {
+            scanModal.style.display = 'block';
+            apListEl.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b736f;">Scanning Wi-Fi networks...</div>';
+
+            try {
+                const res = await fetch(apiUrl('/api/wifi/scan'));
+                if (!res.ok) throw new Error('Scan failed');
+                const list = await res.json();
+
+                list.sort((a, b) => b.rssi - a.rssi);
+                const added = new Set();
+                apListEl.innerHTML = '';
+
+                list.forEach(ap => {
+                    if (!added.has(ap.ssid) && ap.ssid) {
+                        const div = document.createElement('div');
+                        div.className = 'ap-item';
+                        div.innerHTML = `
+                            <span class="ssid">${ap.ssid}</span>
+                            <span class="rssi">${ap.rssi} dBm</span>
+                        `;
+                        div.onclick = () => {
+                            document.getElementById('ssid').value = ap.ssid;
+                            closeModal();
+                        };
+                        apListEl.appendChild(div);
+                        added.add(ap.ssid);
+                    }
+                });
+
+                if (added.size === 0) {
+                    apListEl.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b736f;">No networks found</div>';
+                }
+            } catch (e) {
+                apListEl.innerHTML = '<div style="text-align: center; padding: 20px; color: #bf5e3d;">Scan failed</div>';
+            }
+        }
+
+        async function loadConfig() {
+            try {
+                const res = await fetch(apiUrl('/api/config'));
+                if (!res.ok) throw new Error('Fetch failed');
+                const data = await res.json();
+
+                appState.ap_mode = !!data.ap_mode;
+                appState.hide_monitor_ui = !!data.hide_monitor_ui;
+                applyRuntimeLayout();
+
+                document.getElementById('devName').value = data.device.device_name || '';
+                document.getElementById('ssid').value = data.wifi.ssid || '';
+                document.getElementById('currentSSID').textContent = data.wifi.ssid || 'Not connected';
+                document.getElementById('meterType').value = data.meter.type || '';
+                document.getElementById('meterHost').value = data.meter.host || '';
+                document.getElementById('meterPort').value = data.meter.port || 502;
+                updateMeterTypeHelp(false);
+                document.getElementById('destinationType').value = (data.destination && data.destination.type) || 'NONE';
+                document.getElementById('destinationAddress').value = (data.destination && data.destination.address) || '';
+                document.getElementById('cloudSn').value = (data.destination && data.destination.sn) || data.cloud.sn || '';
+                toggleDestinationFields();
+                const firmware = data.firmware || {};
+                const version = firmware.version || 'Unknown';
+                const buildDate = firmware.build_date || '';
+                const buildTime = firmware.build_time || '';
+                const idf = firmware.idf || '';
+                document.getElementById('firmwareVersion').textContent = `v${version}`;
+                document.getElementById('firmwareMeta').textContent =
+                    [buildDate && buildTime ? `Built ${buildDate} ${buildTime}` : '', idf ? `ESP-IDF ${idf}` : '']
+                        .filter(Boolean)
+                        .join(' · ') || 'Firmware metadata unavailable.';
+            } catch (e) {
+                showStatus('Failed to load configuration', 'error');
+            }
+        }
+
+        async function saveConfig(e) {
+            e.preventDefault();
+            const submitButton = document.querySelector('#cfgForm button[type="submit"]');
+
+            const destinationType = document.getElementById('destinationType').value;
+            const destinationAddress = document.getElementById('destinationAddress').value.trim();
+            const uploadSn = document.getElementById('cloudSn').value;
+
+            const data = {
+                device: { device_name: document.getElementById('devName').value },
+                meter: {
+                    type: document.getElementById('meterType').value,
+                    host: document.getElementById('meterHost').value.trim(),
+                    port: Number(document.getElementById('meterPort').value || 502)
+                },
+                destination: {
+                    type: destinationType,
+                    address: destinationAddress,
+                    sn: uploadSn
+                },
+                cloud: {
+                    server: '',
+                    sn: uploadSn
+                }
+            };
+
+            try {
+                if (submitButton) submitButton.disabled = true;
+                showStatus('Validating source settings...', 'info');
+                const res = await fetchWithTimeout(apiUrl('/api/source'), {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                }, 30000);
+
+                const payload = await res.json().catch(() => ({}));
+
+                if (res.ok) {
+                    await fetch(apiUrl('/api/restart'), { method: 'POST' }).catch(() => {});
+                    showStatus(payload.message || 'Source settings saved. Device is restarting to apply them.', 'success');
+                    setTimeout(() => location.reload(), 5000);
+                } else {
+                    throw new Error(payload.error || 'Save failed');
+                }
+            } catch (err) {
+                showStatus(err.message || 'Failed to save source settings', 'error');
+            } finally {
+                if (submitButton) submitButton.disabled = false;
+            }
+            return false;
+        }
+
+        async function saveWiFi(e) {
+            e.preventDefault();
+            showStatus('Saving Wi-Fi settings...', 'info');
+
+            try {
+                const data = {
+                    wifi: {
+                        ssid: document.getElementById('ssid').value,
+                        password: document.getElementById('pwd').value
+                    }
+                };
+
+                const saveRes = await fetch(apiUrl('/api/network'), {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+
+                const payload = await saveRes.json().catch(() => ({}));
+
+                if (saveRes.ok) {
+                    await fetch(apiUrl('/api/restart'), { method: 'POST' }).catch(() => {});
+                    showStatus('Wi-Fi settings saved. Device is restarting to reconnect...', 'success');
+                    setTimeout(() => location.reload(), 3000);
+                } else {
+                    throw new Error(payload.error || 'Save failed');
+                }
+            } catch (err) {
+                showStatus(err.message || 'Failed to save Wi-Fi settings', 'error');
+            }
+            return false;
+        }
+
+        async function restartDevice() {
+            if (!confirm('Restart the device now?')) return;
+
+            showStatus('Restarting device...', 'info');
+            try {
+                await fetch(apiUrl('/api/restart'), { method: 'POST' });
+                showStatus('Device is restarting...', 'success');
+                setTimeout(() => location.reload(), 5000);
+            } catch (e) {
+                showStatus('Restart command sent', 'success');
+            }
+        }
+
+        async function factoryReset() {
+            if (!confirm('Factory reset the device? This clears saved Wi-Fi and all current settings.')) return;
+
+            showStatus('Factory reset in progress...', 'warning');
+            try {
+                const res = await fetch(apiUrl('/api/factory-reset'), { method: 'POST' });
+                if (!res.ok) {
+                    throw new Error('Factory reset failed');
+                }
+                showStatus('Factory reset started. Device is rebooting...', 'success');
+                setTimeout(() => location.reload(), 8000);
+            } catch (e) {
+                showStatus(e.message || 'Factory reset failed', 'error');
+            }
+        }
+
+        function updateFileName() {
+            const fileInput = document.getElementById('fwFile');
+            const fileName = document.getElementById('fileName');
+            if (fileInput.files.length > 0) {
+                fileName.textContent = fileInput.files[0].name;
+            } else {
+                fileName.textContent = 'No file selected';
+            }
+        }
+
+        async function uploadOta() {
+            const fileInput = document.getElementById('fwFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showStatus('Please select a firmware file first', 'warning');
+                return;
+            }
+
+            if (!confirm(`Upload ${file.name}? Device will restart after update.`)) return;
+
+            showStatus('Uploading firmware. Please wait...', 'info');
+
+            try {
+                const res = await fetch(apiUrl('/api/ota'), {
+                    method: 'POST',
+                    body: file
+                });
+
+                if (res.ok) {
+                    showStatus('Firmware updated. Device rebooting...', 'success');
+                    setTimeout(() => location.reload(), 10000);
+                } else {
+                    throw new Error('Update failed');
+                }
+            } catch (e) {
+                showStatus('Firmware update failed: ' + e.message, 'error');
+            }
+        }
+
+        function showStatus(message, type) {
+            const titles = {
+                info: 'Info',
+                success: 'Done',
+                warning: 'Attention',
+                error: 'Error'
+            };
+
+            noticeTitle.textContent = titles[type] || 'Status';
+            noticeMessage.textContent = message;
+            noticeCard.setAttribute('data-tone', type || 'info');
+            noticeModal.style.display = 'block';
+        }
+
+        window.onclick = (event) => {
+            if (event.target === scanModal) {
+                closeModal();
+            }
+            if (event.target === noticeModal) {
+                closeNoticeModal();
+            }
+        };
+
+        window.onload = async () => {
+            toggleDestinationFields();
+            await loadConfig();
+            if (!appState.hide_monitor_ui) {
+                refreshMeterData();
+                startAutoRefresh();
+            }
+        };
+
+        window.onbeforeunload = () => {
+            stopAutoRefresh();
+        };
+    </script>
+</body>
+</html>
