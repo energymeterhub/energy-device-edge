@@ -1,68 +1,140 @@
 # Energy Device Edge
 
-`energy-device-edge` is an ESP-IDF firmware project that reads a local energy source on the LAN, normalizes the data into the IAMMETER upload shape, and optionally forwards it to an IAMMETER-compatible destination.
+`energy-device-edge` is an ESP32-C3 firmware project from [EnergyMeterHub](https://www.energymeterhub.com) that turns a small Wi-Fi device into a local energy-data bridge.
 
-## Current Scope
+It connects to a supported energy meter on your LAN, reads live three-phase data, shows it in a built-in web UI, and can forward the normalized data to cloud or local services.
 
-Supported source devices:
+## What It Does
+
+- reads live data from a supported LAN energy meter
+- shows the data in a built-in web UI
+- forwards normalized data to a cloud or local service
+- provides Wi-Fi setup and recovery through SoftAP mode
+
+In short: this firmware makes an `ESP32-C3` act as a small edge gateway between a local energy meter and the platform you want to use.
+
+## Hardware
+
+The firmware targets `ESP32-C3`.
+
+<p align="center">
+  <img src="docs/assets/esp32-c3.png" alt="ESP32-C3" width="220">
+</p>
+
+Suggested use:
+
+- ESP32-C3 development board
+- 2.4 GHz Wi-Fi network
+- one supported source meter on the same LAN
+
+## UI Preview
+
+Monitor view:
+
+![Monitor UI](docs/assets/monitor-ui.png)
+
+Settings view:
+
+![Settings UI](docs/assets/settings-ui.png)
+
+## Supported Sources
 
 | Device | Type String | Protocol | Default Port |
 | --- | --- | --- | --- |
 | IAMMETER WEM3080T | `IAMMETER_WEM3080T` | Modbus TCP | `502` |
 | Shelly Pro 3EM | `SHELLY_3EM` | Shelly RPC HTTP | `80` |
 
-Supported destinations:
+Legacy aliases are normalized automatically:
+
+- `IAMMETER` -> `IAMMETER_WEM3080T`
+- `SHELLY` -> `SHELLY_3EM`
+- `SHELLY_PRO_3EM` -> `SHELLY_3EM`
+
+## Destinations
 
 | Destination | Type String | Notes |
 | --- | --- | --- |
 | Disabled | `NONE` | Read locally only |
-| IAMMETER Cloud | `IAMMETER_CLOUD` | Uses the public IAMMETER cloud base URL |
-| IAMMETER Local | `IAMMETER_LOCAL` | Uses a user-provided base URL |
+| IAMMETER Cloud | `IAMMETER_CLOUD` | One built-in cloud target |
+| IAMMETER Local | `IAMMETER_LOCAL` | User-provided compatible endpoint |
 
-The project no longer includes inverter drivers or other source types. Both supported sources map into the same `meter_data_t` structure, so the monitor UI and uploader stay device-agnostic.
+The current firmware includes built-in destination types for IAMMETER Cloud and compatible local endpoints. The project itself is meant to stay useful as a general edge bridge, not just for one service.
 
-## Runtime Behavior
+The uploader currently appends this path to the destination base URL:
 
-The firmware has two operating modes:
+```text
+/api/v1/sensor/uploadsensor
+```
 
-1. `STA connected`
-   The device joins the configured Wi-Fi network, starts the web UI, polls the configured source device, and starts the uploader when a destination is enabled.
-2. `SoftAP recovery`
-   If Wi-Fi is missing or cannot connect, the device starts an open provisioning hotspot named `energy_device_edge_xxxx`, serves the UI/API locally, and skips source polling and cloud upload until normal Wi-Fi becomes available again.
+Examples:
 
-When the device is in SoftAP mode, it periodically checks whether the configured Wi-Fi is reachable and reboots back into normal mode once connectivity returns.
+- `https://www.iammeter.com/api/v1/sensor/uploadsensor`
+- `http://192.168.1.50/api/v1/sensor/uploadsensor`
 
-## Web UI And API
+## How It Works
 
-The embedded UI is a small control surface for:
+1. Connect the device to Wi-Fi.
+2. Configure a supported source meter in the web UI.
+3. View live data locally in the browser.
+4. Optionally forward that data to a configured destination.
 
-- live monitor data
-- source and destination configuration
-- Wi-Fi scan and provisioning
-- OTA firmware upload
-- system restart
-- factory reset
+## Operating Modes
 
-Main HTTP endpoints:
+### STA Mode
+
+In normal mode the device joins your Wi-Fi, serves the web UI on the LAN, reads the configured source, and uploads data when a destination is enabled.
+
+### SoftAP Recovery
+
+If Wi-Fi is missing or connection fails, the device starts an open recovery hotspot:
+
+```text
+energy_device_edge_xxxx
+```
+
+where `xxxx` is derived from the MAC address.
+
+In this mode the device keeps the network and system controls available so you can recover the connection.
+
+## Built-In Web UI
+
+The embedded web UI is the main control surface for the device.
+
+Tabs and purpose:
+
+- `Monitor`: live three-phase voltage, current, power, forward energy, reverse energy, frequency, and power factor
+- `Settings`: source meter type, host, port, device name, upload destination, and upload SN
+- `Network`: Wi-Fi SSID/password and nearby AP scan
+- `Advanced`: firmware version, OTA update, restart, and factory reset
+
+The UI covers live monitoring, source settings, Wi-Fi setup, OTA update, restart, and factory reset.
+
+## API
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `GET` | `/` | Embedded UI |
-| `GET` | `/api/config` | Load saved configuration and UI state |
-| `POST` | `/api/config` | Save the full configuration in one request |
-| `POST` | `/api/source` | Save source, destination, and device settings, then hot-apply them |
+| `GET` | `/` | Embedded web UI |
+| `GET` | `/api/config` | Load saved config, UI state, and firmware metadata |
+| `POST` | `/api/config` | Save the full configuration payload |
+| `POST` | `/api/source` | Save and validate source, destination, and device settings |
 | `POST` | `/api/network` | Save Wi-Fi settings only |
 | `GET` | `/api/meter/data` | Read normalized live meter JSON |
 | `GET` | `/api/wifi/scan` | Scan nearby Wi-Fi networks |
-| `POST` | `/api/ota` | Upload a new firmware image |
-| `POST` | `/api/restart` | Reboot the device |
-| `POST` | `/api/factory-reset` | Clear saved configuration and reboot |
+| `POST` | `/api/ota` | Upload a firmware image |
+| `POST` | `/api/restart` | Restart the device |
+| `POST` | `/api/factory-reset` | Clear saved config and reboot |
 
-`POST /api/source` validates the selected source, saves the configuration, and immediately hot-applies the new meter address, port, and uploader target without requiring a reboot. `POST /api/config` remains available for full-payload compatibility. `POST /api/network` only updates Wi-Fi credentials, so network setup is not blocked by meter validation.
+## Normalized Data
+
+The device converts supported source meters into one common three-phase payload so the monitor UI and uploader do not need different logic per meter family.
+
+## Source Notes
+
+- `IAMMETER WEM3080T` uses port `502` by default.
+- `Shelly Pro 3EM` uses port `80` by default.
+- `Shelly Pro 3EM` does not report frequency in the payload used here.
 
 ## Simulator Pairing
-
-This firmware is designed to pair with the local `energy-device-simulator` project during development.
 
 Typical simulator ports:
 
@@ -74,30 +146,18 @@ Typical real-device ports:
 - `IAMMETER WEM3080T`: `502`
 - `Shelly Pro 3EM`: `80`
 
-The UI lets you override the source port so you can point the firmware at either the simulator or real hardware.
-
 ## Project Layout
 
-- `main/`
-  Application boot sequence and runtime orchestration.
-- `components/config`
-  Persistent device configuration and normalization logic.
-- `components/meter_client`
-  Source abstraction plus the IAMMETER and Shelly drivers.
-- `components/modbus_reader`
-  Shared Modbus TCP register reader used by IAMMETER.
-- `components/cloud`
-  Periodic uploader for IAMMETER-compatible JSON payloads.
-- `components/settings_api`
-  REST endpoints for config, meter reads, Wi-Fi scan, OTA, and restart.
-- `components/webserver`
-  Embedded HTML UI.
-- `components/wifi`
-  STA/AP startup, recovery, and scan support.
-- `docs/`
-  Design notes for the current source abstraction.
+- `main/` - app startup
+- `components/config/` - configuration storage
+- `components/wifi/` - Wi-Fi and SoftAP recovery
+- `components/webserver/` - web UI delivery
+- `components/settings_api/` - API endpoints
+- `components/meter_client/` - supported meter integrations
+- `components/cloud/` - uploader
+- `docs/` - notes and README assets
 
-## Build
+## Build And Flash
 
 Typical ESP-IDF workflow:
 
@@ -106,11 +166,26 @@ idf.py build
 idf.py -p PORT flash monitor
 ```
 
-The repo keeps `sdkconfig.defaults` as the checked-in baseline. Local `sdkconfig`, build output, and managed components are treated as generated files and should not be committed.
+If you use a local ESP-IDF install explicitly:
+
+```bash
+export IDF_PATH=/path/to/esp-idf
+. $IDF_PATH/export.sh
+idf.py build
+idf.py -p PORT flash monitor
+```
+
+## Provisioning Walkthrough
+
+1. Flash the firmware to an `ESP32-C3` board.
+2. On first boot, connect to the recovery hotspot if normal Wi-Fi is not available.
+3. Open the device IP in a browser.
+4. In `Network`, save the Wi-Fi SSID and password.
+5. In `Settings`, choose the source type, enter the source host and port, then choose the destination.
+6. Save the source settings and wait for the device to restart.
+7. Open `Monitor` to confirm that live data is updating.
 
 ## Notes
 
-- The uploader posts to `/api/v1/sensor/uploadsensor` on the selected destination base URL.
-- `Shelly Pro 3EM` uses `/rpc/EM.GetStatus?id=0` for real-time values and `/rpc/EMData.GetStatus?id=0` for cumulative forward and reverse energy.
-- `Shelly Pro 3EM` does not expose frequency in the payload used here, so frequency stays `0` and the UI reports that as not available.
-- If old NVS data still contains removed source types, config normalization clears them and the UI expects one of the current supported source types to be selected again.
+- This is an open-source firmware project from [EnergyMeterHub](https://www.energymeterhub.com).
+- `sdkconfig.defaults` is the checked-in baseline config.
