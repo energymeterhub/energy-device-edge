@@ -23,13 +23,30 @@ static TickType_t s_last_restart_attempt = 0;
 
 enum {
     CID_HOLD_READ = 0,
+    CID_HOLD_READ_DYNAMIC,
     CID_COUNT
 };
+
+static mb_parameter_descriptor_t s_desc_mut[CID_COUNT];
 
 static const mb_parameter_descriptor_t s_param_desc[] = {
     {
         .cid = CID_HOLD_READ,
         .param_key = "HOLD_READ",
+        .param_units = "raw",
+        .mb_slave_addr = 1,
+        .mb_param_type = MB_PARAM_HOLDING,
+        .mb_reg_start  = 0,
+        .mb_size       = 1,
+        .param_offset  = 0,
+        .param_type    = PARAM_TYPE_U16,
+        .param_size    = 2,
+        .param_opts    = { .min = 0, .max = 0, .step = 0 },
+        .access        = PAR_PERMS_READ
+    },
+    {
+        .cid = CID_HOLD_READ_DYNAMIC,
+        .param_key = "HOLD_READ_DYNAMIC",
         .param_units = "raw",
         .mb_slave_addr = 1,
         .mb_param_type = MB_PARAM_HOLDING,
@@ -82,14 +99,14 @@ static esp_err_t s_master_start(const modbus_reader_cfg_t *cfg, esp_netif_t *net
         return err != ESP_OK ? err : ESP_ERR_INVALID_STATE;
     }
 
-    static mb_parameter_descriptor_t desc_mut[CID_COUNT];
-    memcpy(desc_mut, s_param_desc, sizeof(s_param_desc));
-    desc_mut[CID_HOLD_READ].mb_slave_addr = cfg->unit_id;
-    desc_mut[CID_HOLD_READ].mb_reg_start  = cfg->reg_start;
-    desc_mut[CID_HOLD_READ].mb_size       = cfg->reg_count;
-    desc_mut[CID_HOLD_READ].param_size    = cfg->reg_count * sizeof(uint16_t);
+    memcpy(s_desc_mut, s_param_desc, sizeof(s_param_desc));
+    s_desc_mut[CID_HOLD_READ].mb_slave_addr = cfg->unit_id;
+    s_desc_mut[CID_HOLD_READ].mb_reg_start  = cfg->reg_start;
+    s_desc_mut[CID_HOLD_READ].mb_size       = cfg->reg_count;
+    s_desc_mut[CID_HOLD_READ].param_size    = cfg->reg_count * sizeof(uint16_t);
+    s_desc_mut[CID_HOLD_READ_DYNAMIC].mb_slave_addr = cfg->unit_id;
 
-    err = mbc_master_set_descriptor(s_master_ctx, &desc_mut[0], CID_COUNT);
+    err = mbc_master_set_descriptor(s_master_ctx, &s_desc_mut[0], CID_COUNT);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "mbc_master_set_descriptor failed: %s", esp_err_to_name(err));
         mbc_master_delete(s_master_ctx);
@@ -227,6 +244,58 @@ esp_err_t modbus_reader_read_holding(uint16_t *out_regs, uint16_t reg_count)
             }
         } else if (err == ESP_ERR_TIMEOUT) {
             ESP_LOGW(TAG, "Read timed out; keep current Modbus session and retry later");
+        }
+    }
+
+    xSemaphoreGive(s_modbus_lock);
+    return err;
+}
+
+esp_err_t modbus_reader_read_holding_range(uint16_t reg_start, uint16_t *out_regs, uint16_t reg_count)
+{
+    if (!s_modbus_lock) return ESP_ERR_INVALID_STATE;
+    if (!s_started || !s_master_ctx) return ESP_ERR_INVALID_STATE;
+    if (!out_regs || reg_count == 0) return ESP_ERR_INVALID_ARG;
+
+    if (xSemaphoreTake(s_modbus_lock, pdMS_TO_TICKS(5000)) != pdTRUE) {
+        ESP_LOGW(TAG, "Timed out waiting for Modbus lock");
+        return ESP_ERR_TIMEOUT;
+    }
+
+    s_desc_mut[CID_HOLD_READ_DYNAMIC].mb_slave_addr = s_cfg.unit_id;
+    s_desc_mut[CID_HOLD_READ_DYNAMIC].mb_reg_start = reg_start;
+    s_desc_mut[CID_HOLD_READ_DYNAMIC].mb_size = reg_count;
+    s_desc_mut[CID_HOLD_READ_DYNAMIC].param_size = reg_count * sizeof(uint16_t);
+
+    esp_err_t err = mbc_master_set_descriptor(s_master_ctx, &s_desc_mut[0], CID_COUNT);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "failed to set dynamic descriptor: %s", esp_err_to_name(err));
+        xSemaphoreGive(s_modbus_lock);
+        return err;
+    }
+
+    uint8_t type = 0;
+    memset(out_regs, 0, reg_count * sizeof(uint16_t));
+    err = mbc_master_get_parameter(
+        s_master_ctx,
+        CID_HOLD_READ_DYNAMIC,
+        (uint8_t*)out_regs,
+        &type
+    );
+
+    if (err != ESP_OK && (err == ESP_ERR_INVALID_STATE || err == ESP_FAIL)) {
+        esp_err_t rc = s_master_restart_locked();
+        if (rc == ESP_OK) {
+            err = mbc_master_set_descriptor(s_master_ctx, &s_desc_mut[0], CID_COUNT);
+            if (err == ESP_OK) {
+                memset(out_regs, 0, reg_count * sizeof(uint16_t));
+                err = mbc_master_get_parameter(
+                    s_master_ctx,
+                    CID_HOLD_READ_DYNAMIC,
+                    (uint8_t*)out_regs,
+                    &type
+                );
+            }
         }
     }
 

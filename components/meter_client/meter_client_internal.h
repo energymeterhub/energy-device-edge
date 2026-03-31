@@ -31,4 +31,5 @@ typedef struct meter_client_t {
 
 // Driver operation tables exposed by each implementation.
 extern const meter_driver_ops_t iammeter_driver_ops;
+extern const meter_driver_ops_t fronius_sunspec_driver_ops;
 extern const meter_driver_ops_t shelly_3em_driver_ops;

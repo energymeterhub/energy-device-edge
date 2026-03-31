@@ -13,6 +13,7 @@ extern "C" {
 typedef enum {
     METER_TYPE_UNKNOWN = 0,
     METER_TYPE_IAMMETER_WEM3080T, // IAMMETER WEM3080T three-phase meter
+    METER_TYPE_FRONIUS_SUNSPEC,   // Fronius inverter via SunSpec Modbus TCP
     METER_TYPE_SHELLY_3EM,        // Shelly Pro 3EM over Shelly RPC HTTP
     METER_TYPE_MAX
 } meter_type_t;
@@ -80,7 +81,7 @@ typedef struct meter_client_t* meter_client_handle_t;
 /**
  * @brief Create a client from a type string.
  * 
- * @param type_str Type string, such as "IAMMETER_WEM3080T" or "SHELLY_3EM".
+ * @param type_str Type string, such as "IAMMETER_WEM3080T", "FRONIUS_SUNSPEC", or "SHELLY_3EM".
  * @param config Client configuration.
  * @return Client handle, or NULL on failure.
  */

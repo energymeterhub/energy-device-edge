@@ -42,11 +42,14 @@ Settings view:
 | Device | Type String | Protocol | Default Port |
 | --- | --- | --- | --- |
 | IAMMETER WEM3080T | `IAMMETER_WEM3080T` | Modbus TCP | `502` |
+| Fronius SunSpec Inverter | `FRONIUS_SUNSPEC` | SunSpec Modbus TCP | `502` |
 | Shelly Pro 3EM | `SHELLY_3EM` | Shelly RPC HTTP | `80` |
 
 Legacy aliases are normalized automatically:
 
 - `IAMMETER` -> `IAMMETER_WEM3080T`
+- `FRONIUS` -> `FRONIUS_SUNSPEC`
+- `FRONIUS_GEN24` -> `FRONIUS_SUNSPEC`
 - `SHELLY` -> `SHELLY_3EM`
 - `SHELLY_PRO_3EM` -> `SHELLY_3EM`
 
@@ -131,6 +134,7 @@ The device converts supported source meters into one common three-phase payload 
 ## Source Notes
 
 - `IAMMETER WEM3080T` uses port `502` by default.
+- `Fronius SunSpec Inverter` uses port `502` by default and reads the SunSpec discovery chain starting at holding register `40000`.
 - `Shelly Pro 3EM` uses port `80` by default.
 - `Shelly Pro 3EM` does not report frequency in the payload used here.
 
@@ -139,11 +143,13 @@ The device converts supported source meters into one common three-phase payload 
 Typical simulator ports:
 
 - `IAMMETER WEM3080T`: `502`
+- `Fronius SunSpec Inverter`: `1503` or `502`
 - `Shelly Pro 3EM`: `18080`
 
 Typical real-device ports:
 
 - `IAMMETER WEM3080T`: `502`
+- `Fronius SunSpec Inverter`: `502`
 - `Shelly Pro 3EM`: `80`
 
 ## Project Layout

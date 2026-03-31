@@ -15,6 +15,7 @@ static const char *TAG = "meter_client";
 // Driver registry, statically declared at build time.
 static const meter_driver_registry_t driver_registry[] = {
     {METER_TYPE_IAMMETER_WEM3080T, "IAMMETER_WEM3080T", &iammeter_driver_ops},
+    {METER_TYPE_FRONIUS_SUNSPEC,   "FRONIUS_SUNSPEC",   &fronius_sunspec_driver_ops},
     {METER_TYPE_SHELLY_3EM,        "SHELLY_3EM",        &shelly_3em_driver_ops},
 };
 
@@ -42,6 +43,12 @@ meter_type_t meter_type_from_string(const char *type_str)
         strcasecmp(type_str, "SHELLY_PRO_3EM") == 0) {
         return METER_TYPE_SHELLY_3EM;
     }
+
+    if (strcasecmp(type_str, "FRONIUS") == 0 ||
+        strcasecmp(type_str, "FRONIUS_SUNSPEC") == 0 ||
+        strcasecmp(type_str, "FRONIUS_GEN24") == 0) {
+        return METER_TYPE_FRONIUS_SUNSPEC;
+    }
     
     for (size_t i = 0; i < driver_registry_size; i++) {
         if (strcasecmp(type_str, driver_registry[i].name) == 0) {
@@ -67,6 +74,7 @@ meter_protocol_t meter_type_get_protocol(meter_type_t type)
 {
     switch (type) {
         case METER_TYPE_IAMMETER_WEM3080T:
+        case METER_TYPE_FRONIUS_SUNSPEC:
             return METER_PROTOCOL_MODBUS_TCP;
         case METER_TYPE_SHELLY_3EM:
             return METER_PROTOCOL_HTTP;
@@ -81,6 +89,7 @@ uint16_t meter_type_default_port(meter_type_t type)
 {
     switch (type) {
         case METER_TYPE_IAMMETER_WEM3080T:
+        case METER_TYPE_FRONIUS_SUNSPEC:
             return 502;
         case METER_TYPE_SHELLY_3EM:
             return 80;

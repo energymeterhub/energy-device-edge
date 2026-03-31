@@ -35,7 +35,7 @@ typedef struct {
 
     /* meter settings */
     struct {
-        char type[32];      /* meter type: "IAMMETER_WEM3080T" | "SHELLY_3EM" */
+        char type[32];      /* meter type: "IAMMETER_WEM3080T" | "FRONIUS_SUNSPEC" | "SHELLY_3EM" */
         char host[128];     /* meter IP address or domain */
     } meter;
 
@@ -51,7 +51,7 @@ typedef struct {
     } device;
 
     /* Source device port */
-    uint16_t meter_port;       /* meter port, usually 502 for IAMMETER or 80 for Shelly Pro 3EM */
+    uint16_t meter_port;       /* meter port, usually 502 for IAMMETER/Fronius SunSpec or 80 for Shelly Pro 3EM */
 
     /* upload destination settings */
     struct {

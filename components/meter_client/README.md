@@ -7,6 +7,7 @@
 | Device | Type String | Protocol |
 | --- | --- | --- |
 | IAMMETER WEM3080T | `IAMMETER_WEM3080T` | Modbus TCP |
+| Fronius SunSpec Inverter | `FRONIUS_SUNSPEC` | SunSpec Modbus TCP |
 | Shelly Pro 3EM | `SHELLY_3EM` | Shelly RPC HTTP |
 
 Both drivers populate the same `meter_data_t` structure, so the rest of the firmware can read live data without branching on device-specific payload formats.
@@ -40,6 +41,19 @@ strncpy(config.host, "192.168.1.120", sizeof(config.host) - 1);
 meter_client_handle_t client = meter_client_create("SHELLY_3EM", &config);
 ```
 
+Fronius example:
+
+```c
+meter_client_config_t config = {
+    .port = 502,
+    .unit_id = 1,
+    .timeout_ms = 5000,
+};
+strncpy(config.host, "192.168.1.150", sizeof(config.host) - 1);
+
+meter_client_handle_t client = meter_client_create("FRONIUS_SUNSPEC", &config);
+```
+
 `unit_id` is only relevant for the Modbus source.
 
 ## Simulator Ports
@@ -47,11 +61,13 @@ meter_client_handle_t client = meter_client_create("SHELLY_3EM", &config);
 If you are pairing the firmware with the local simulator instead of hardware:
 
 - `IAMMETER WEM3080T` commonly stays on `502`
+- `Fronius SunSpec Inverter` can use `1503` in the simulator example or `502` for the built-in profile
 - `Shelly Pro 3EM` commonly uses `18080`
 
 On real hardware, keep the normal default ports:
 
 - `IAMMETER WEM3080T`: `502`
+- `Fronius SunSpec Inverter`: `502`
 - `Shelly Pro 3EM`: `80`
 
 ## Type Aliases
@@ -59,6 +75,8 @@ On real hardware, keep the normal default ports:
 The parser still accepts a couple of legacy aliases during config normalization:
 
 - `IAMMETER` -> `IAMMETER_WEM3080T`
+- `FRONIUS` -> `FRONIUS_SUNSPEC`
+- `FRONIUS_GEN24` -> `FRONIUS_SUNSPEC`
 - `SHELLY` -> `SHELLY_3EM`
 - `SHELLY_PRO_3EM` -> `SHELLY_3EM`
 
@@ -70,3 +88,13 @@ The Shelly driver reads:
 - `GET /rpc/EMData.GetStatus?id=0` for cumulative forward and reverse energy
 
 Phase C active power prefers `c_active_power` and falls back to `c_act_power` for compatibility with different payload variants.
+
+## Fronius SunSpec Mapping
+
+The Fronius driver reads the SunSpec discovery chain from holding registers beginning at `40000`.
+
+- signature: `40000-40001`
+- Common model: `40002-40069`
+- inverter model `103`: `40070-40121`
+
+The current normalization focuses on scaled three-phase current and voltage, total AC power, lifetime energy, line frequency, and model identification.

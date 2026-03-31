@@ -23,6 +23,9 @@ esp_err_t modbus_reader_init(const modbus_reader_cfg_t *cfg, esp_netif_t *netif)
 // Read holding registers into out_regs. Buffer length must be at least reg_count.
 esp_err_t modbus_reader_read_holding(uint16_t *out_regs, uint16_t reg_count);
 
+// Read an arbitrary holding-register range without changing the configured default block.
+esp_err_t modbus_reader_read_holding_range(uint16_t reg_start, uint16_t *out_regs, uint16_t reg_count);
+
 // Release all resources.
 esp_err_t modbus_reader_deinit(void);
 

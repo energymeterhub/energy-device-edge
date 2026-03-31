@@ -2,6 +2,7 @@ idf_component_register(
     SRCS 
         "meter_client.c"
         "drivers/iammeter_driver.c"
+        "drivers/fronius_sunspec_driver.c"
         "drivers/shelly_3em_driver.c"
     INCLUDE_DIRS "include"
     PRIV_INCLUDE_DIRS "."

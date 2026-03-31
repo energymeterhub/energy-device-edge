@@ -64,6 +64,13 @@ static void normalize_meter_type(device_config_t *cfg)
         return;
     }
 
+    if (strcasecmp(cfg->meter.type, "FRONIUS") == 0 ||
+        strcasecmp(cfg->meter.type, "FRONIUS_SUNSPEC") == 0 ||
+        strcasecmp(cfg->meter.type, "FRONIUS_GEN24") == 0) {
+        strlcpy(cfg->meter.type, "FRONIUS_SUNSPEC", sizeof(cfg->meter.type));
+        return;
+    }
+
     cfg->meter.type[0] = '\0';
 }
 

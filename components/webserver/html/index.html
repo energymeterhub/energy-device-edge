@@ -665,6 +665,7 @@
                                 <select id="meterType" name="meter_type" onchange="updateMeterTypeHelp(true)">
                                     <option value="">-- Not Configured --</option>
                                     <option value="IAMMETER_WEM3080T">IAMMETER WEM3080T</option>
+                                    <option value="FRONIUS_SUNSPEC">Fronius SunSpec Inverter</option>
                                     <option value="SHELLY_3EM">Shelly Pro 3EM</option>
                                 </select>
                                 <div class="hint" id="meterTypeHint">Choose the local source device protocol.</div>
@@ -679,7 +680,7 @@
                             <div class="group">
                                 <label>Meter Port</label>
                                 <input type="number" id="meterPort" name="meter_port" value="502" placeholder="502" min="1" max="65535">
-                                <div class="hint" id="meterPortHint">IAMMETER uses Modbus TCP on 502. Shelly Pro 3EM uses Shelly RPC HTTP on 80, while the simulator often uses 18080.</div>
+                                <div class="hint" id="meterPortHint">IAMMETER and Fronius SunSpec use Modbus TCP on 502. Shelly Pro 3EM uses Shelly RPC HTTP on 80, while the simulator often uses 18080.</div>
                             </div>
                         </div>
 
@@ -828,6 +829,12 @@
                 typeHint: 'Three-phase Modbus TCP source compatible with the WEM3080T register map.',
                 hostHint: 'Use the IAMMETER IP or host name only. This source reads Modbus TCP registers.',
                 portHint: 'IAMMETER WEM3080T uses Modbus TCP on port 502.'
+            },
+            FRONIUS_SUNSPEC: {
+                defaultPort: 502,
+                typeHint: 'Fronius-style inverter source using the SunSpec Modbus TCP discovery chain starting at register 40000.',
+                hostHint: 'Use the inverter IP or host name only. This source reads SunSpec Modbus TCP registers.',
+                portHint: 'Fronius SunSpec uses Modbus TCP on port 502. The simulator example can also run on port 1503.'
             },
             SHELLY_3EM: {
                 defaultPort: 80,
